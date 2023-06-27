@@ -16,13 +16,18 @@ class Board:
     def __init__(self):
         self.bar = Bar()
         self.home = Home()
-        self.points = [Point() for _ in range(24)]
+        self.board = [[Tile() for _ in range(12)] for _ in range(31)]
         self.players = [Player("Player 1", "●"), Player("Player 2", "○")]
         self.current_player = random.choice(self.players)
         self.dice = Dice()
 
     def print_board(self):
-        ...
+        print("13 14 15 16 17 18 19 20 21 22 23 24")
+        for row in range(31):
+            for col in range(12):
+                print(self.board[row][col], end=f' {Tile()} ')
+            print()
+        print("12 11 10 09 08 07 06 05 04 03 02 01")
 
 
 class Dice:
@@ -40,7 +45,7 @@ class Stone:
     def __str__(self):
         return self.color
 
-class Point:
+class Tile:
     def __init__(self):
         self.stones = []
 
@@ -88,4 +93,6 @@ class Home:
 
 dice = Dice()
 board = Board()
+tile = Tile()
+board.print_board()
 
