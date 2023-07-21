@@ -1,12 +1,5 @@
 import random
-''''
-povinně implementovaná funkčnost:
-    generování hodu kostkami
-    výpis všech možných tahů hráče
-    jednoduchá umělá inteligence, která náhodně volí jeden z platných tahů
-    trasování chodu každého jednotlivého kamene (od vstupu z baru po vyhození/vyvedení), herní pole se chovají jako zásobník
-    uložení a obnova stavu hry (s návrhem vlastního JSON formátu pro uložení)
-'''
+
 class Player:
     def __init__(self, name, color):
         self.name = name
@@ -14,21 +7,37 @@ class Player:
 
 class Board:
     def __init__(self):
-        self.bar = Bar()
-        self.home = Home()
-        self.board = [[Tile() for _ in range(12)] for _ in range(31)]
-        self.players = [Player("Player 1", "●"), Player("Player 2", "○")]
-        self.current_player = random.choice(self.players)
-        self.dice = Dice()
+        self.board = [Tile() for _ in range(24)]  # Vytvoření 24 zásobníků (sloupců) na herní desce
+        self.players = [Player("Hráč 1", "●"), Player("Hráč 2", "○")]
 
     def print_board(self):
-        print("13 14 15 16 17 18 19 20 21 22 23 24")
-        for row in range(31):
-            for col in range(12):
-                print(self.board[row][col], end=f' {Tile()} ')
-            print()
-        print("12 11 10 09 08 07 06 05 04 03 02 01")
+        print("  ", end="")
+        for i in range(12, 0, -1):
+            print(f"{i:2}", end=" ")
+        print()
+        print("+-" + "--+" * 12)
 
+        for row in range(10): 
+            for i in range(12, -1, -1):  
+                if row < len(self.board[i].stones):  # Pokud řádek ještě obsahuje kámen
+                    print(self.board[i].stones[row], end=" ")  # Výpis kamene
+                else:
+                    print("  ", end=" ")  # Prázdný prostor, pokud řádek neobsahuje kámen
+            print()
+
+
+        for row in range(10, 1, -1): #-1, protože chceme aby nahoře byl poslední daný kámen
+            for i in range(11, 24):  
+                if row < len(self.board[i].stones):  # Pokud řádek ještě obsahuje kámen
+                    print(self.board[i].stones[row], end=" ")  # Výpis kamene
+                else:
+                    print("  ", end=" ")  # Prázdný prostor, pokud řádek neobsahuje kámen
+            print()
+        print("+-" + "--+" * 12) 
+        print("  ", end="")
+        for i in range(13, 25, 1): 
+            print(f"{i:2}", end=" ")
+        print()
 
 class Dice:
     def __init__(self):
@@ -41,58 +50,30 @@ class Dice:
 class Stone:
     def __init__(self, color):
         self.color = color
+        self.memory = []
 
-    def __str__(self):
-        return self.color
+    def move_stone(self, old_pos, new_pos):
+        # Implementace pohybu kamene, pokud je tah validní
+        ...
 
 class Tile:
     def __init__(self):
         self.stones = []
 
-    def __str__(self):
-        return ", ".join(str(stone) for stone in self.stones)
-
-    def add_stone(self, player):
-        self.stones.append(Stone(player.color))
+    def add_stone(self, stone):
+        self.stones.append(stone)
 
     def remove_stone(self):
-        return self.stones.pop()
+        self.stones.pop()
 
-    def check_valid_move(self, player, roll1, roll2):
-        return True
 
-class Dice:
-    def __init__(self):
-        self.values = []
-    
-    def throw(self):
-        values = [random.randint(1,6), random.randint(1,6)]
-        return values
-    
-class Stone:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-        self.positions = [(x, y)]  
-
-    def move_stone(self, new_x, new_y):
-        self.x = new_x
-        self.y = new_y
-        self.positions.append((new_x, new_y))  
-
-    def history(self):
-        return self.positions 
-
-class Bar:
-    def __init__(self) -> None:
-        pass
-
-class Home:
-    def __init__(self) -> None:
-        pass
-
-dice = Dice()
+# Inicializace herní desky a kamene
 board = Board()
 tile = Tile()
-board.print_board()
+dice = Dice()
 
+# Přidání kamenů
+board.board[0].add_stone("●")
+
+
+board.print_board()
