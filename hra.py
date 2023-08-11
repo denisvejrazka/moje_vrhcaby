@@ -49,7 +49,23 @@ class Game:
             self.current_stone = stone2
 
     def check_valid_move(self):
-        ...
+        #kontrola pohybu pro hráče1
+        for t in stone1.memory:
+            for i in range(len(t)-1):
+                if t[i] > t[i+1]:
+                    print("Špatný směr pohybu")
+                    return False
+        
+        #kontrola pohybu pro hráče2
+        for t in stone2.memory:
+            for i in range(len(t)-1):
+                if t[i] < t[i+1]:
+                    print("Špatný směr pohybu")
+                    return False
+                 
+        return True
+        
+
 
     def check_wins(self):
         ...
@@ -130,6 +146,10 @@ class Tile:
 
     def add_stone(self, stone: Stone):
         self.stones.append(stone) 
+        if game.current_player == player1:
+            stone1.memory.append((game.current_player.from_pos, game.current_player.to_pos))
+        elif game.current_player == player2:
+            stone2.memory.append((game.current_player.from_pos, game.current_player.to_pos))
 
     def remove_stone(self):
         self.stones.pop()
@@ -152,32 +172,26 @@ stone2 = Stone(player2)
 
 
 #testing...
-y = 0
-board.board[0].add_stone(stone1)
-board.board[23].add_stone(stone2)
+board.board[6].add_stone(stone1)
+board.board[15].add_stone(stone2)
 game.get_initial_player()
-
-while y <= 10:
+while game.check_valid_move():        
     print(game.current_player.name)
     board.print_board()
     print(dice.throw())
     game.get_current_stone()
     game.current_player.get_player_moves()
-    game.check_valid_move()
-
     #pokud stone který chceme položit není current_player a nebo to není pouze jeden kámen, opačného hráče, tak tah nepovolit!
     if game.current_stone != board.board[game.current_player.from_pos].stones[0]:
         print("Nemůžete operovat s kameny druhého hráče!")
         continue
     
-    board.board[game.current_player.from_pos].remove_stone()
-    
     #pokud je kámen jiného hráče a zároveň se délka dlaždice, na kterou chceme umístit kámen 1, tak pak provedeme výhoz
     if game.current_stone != board.board[game.current_player.to_pos] and len(board.board[game.current_player.to_pos].stones) == 1: 
-            board.board[game.current_player.to_pos].remove_stone()
-            print(f"Hráč na pozici {game.current_player.to_pos} byl vyhozen...")
-            #dodělat logiku pro vyhazování...- implementovat výhoz
-         
+        board.board[game.current_player.to_pos].remove_stone()
+        print(f"Hráč na pozici {game.current_player.to_pos} byl vyhozen...")
+        #dodělat logiku pro vyhazování...- implementovat výhoz
+        continue
+    board.board[game.current_player.from_pos].remove_stone()
     board.board[game.current_player.to_pos].add_stone(game.current_stone)
     game.switch_player()
-    y+=1
