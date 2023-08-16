@@ -1,8 +1,16 @@
 import random
 # TO DO:
-# pouze jeden směr pro každého hráče
 # střídání hráčů
-# ●○
+# logika metody find_available_moves
+
+class Bar:
+    def __init__(self):
+        self.bar_stones = []
+
+    def add_stone_to_bar(self, position):
+        self.bar_stones.append(board.board[position])
+        board.board[position].remove_stone()
+        print(f"Hráč na pozici {position} byl vyhozen...")
 
 class Player:
     def __init__(self, name, stone_symbol, direction):
@@ -15,7 +23,6 @@ class Player:
 
     def get_player_moves(self):
         game.current_player.from_pos = int(input("Z jaké pozice chceš hrát? "))
-        game.current_player.to_pos = int(input("Kam chceš kameny přesunout? "))
 
 
 class Game:
@@ -65,38 +72,38 @@ class Game:
                  
         return True
         
-
-
     def check_wins(self):
         ...
 
     def find_available_moves(self):
-        ...
+        for tile in board.board:
+            if len(tile.stones) == 0:
+                pass
+
 
 class Board:
     def __init__(self):
         self.board = [Tile() for _ in range(24)]
+        free_positions = []
 
     def set_initial_board_layout(self):
         ...
 
     def print_board(self):
-        print("  ", end="")
         for i in range(12, 0, -1):
             print(f"{i:2}", end=" ")
         print()
-        print("+-" + "--+" * 12)
+        print("+" + "--+" * 11)
 
         for row in range(10):
-            for i in range(12, -1, -1):
+            for i in range(11, -1, -1):
                 if row < len(self.board[i].stones):
                     stone = self.board[i].stones[row]
                     player_stone_symbol = None
                     for player in game.players:
                         if stone.owner == player:
                             player_stone_symbol = player.stone_symbol
-
-                    print(player_stone_symbol, end=" ") if player_stone_symbol else print("  ", end=" ")
+                    print(player_stone_symbol, end="  ") if player_stone_symbol else print("  ", end=" ")
                 else:
                     # Prázdný prostor, pokud řádek neobsahuje kámen
                     print("  ", end=" ")
@@ -111,12 +118,11 @@ class Board:
                         if stone.owner == player:
                             player_stone_symbol = player.stone_symbol
 
-                    print(player_stone_symbol, end=" ") if player_stone_symbol else print("  ", end=" ")
+                    print(player_stone_symbol, end="  ") if player_stone_symbol else print("  ", end=" ")
                 else:
                     print("  ", end=" ")
             print()
-        print("+-" + "--+" * 12)
-        print("  ", end="")
+        print("+" + "--+" * 11)
         for i in range(13, 25, 1):
             print(f"{i:2}", end=" ")
         print()
@@ -125,6 +131,9 @@ class Board:
 class Dice:
     def __init__(self):
         self.values = []
+        self.first_dice_position = board.board[dice.values[0]-1]
+        self.second_dice_position = board.board[dice.values[1]-1]
+        self.first_second_dice_position = board.board[(dice.values[0] + dice.values[1])-1]
 
     def throw(self):
         self.values = [random.randint(1, 6), random.randint(1, 6)]
@@ -162,6 +171,7 @@ class Tile:
 
 
 # Inicializace hry
+bar = Bar()
 player1 = Player("Hráč 1", "●", True) # True -> hráč začínající od zhora doleva
 player2 = Player("Hráč 2", "○", False) # False -> hráč začínající zespoda doleva
 game = Game()
@@ -172,9 +182,10 @@ stone2 = Stone(player2)
 
 
 #testing...
-board.board[6].add_stone(stone1)
-board.board[15].add_stone(stone2)
+board.board[23].add_stone(stone2)
+board.board[12].add_stone(stone1)
 game.get_initial_player()
+
 while game.check_valid_move():        
     print(game.current_player.name)
     board.print_board()
@@ -188,9 +199,7 @@ while game.check_valid_move():
     
     #pokud je kámen jiného hráče a zároveň se délka dlaždice, na kterou chceme umístit kámen 1, tak pak provedeme výhoz
     if game.current_stone != board.board[game.current_player.to_pos] and len(board.board[game.current_player.to_pos].stones) == 1: 
-        board.board[game.current_player.to_pos].remove_stone()
-        print(f"Hráč na pozici {game.current_player.to_pos} byl vyhozen...")
-        #dodělat logiku pro vyhazování...- implementovat výhoz
+        bar.add_stone_to_bar(game.current_player.to_pos)
         continue
     board.board[game.current_player.from_pos].remove_stone()
     board.board[game.current_player.to_pos].add_stone(game.current_stone)
