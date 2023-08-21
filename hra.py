@@ -1,7 +1,6 @@
 import random
 # TO DO:
 # střídání hráčů
-# logika metody find_available_moves
 
 class Bar:
     def __init__(self):
@@ -21,9 +20,11 @@ class Player:
         self.to_pos = None
         self.direction = direction
 
-    def get_player_moves(self):
+    def get_player_from(self):
         game.current_player.from_pos = int(input("Z jaké pozice chceš hrát? "))
 
+    def get_player_to(self):
+        game.current_player.to_pos = int(input("Na jakou pozici se chceš přesunout? "))
 
 class Game:
     def __init__(self):
@@ -42,9 +43,7 @@ class Game:
 
     def switch_player(self):
         for player in self.players:
-            #změna hráče
             player.on_turn = not player.on_turn
-            #pokud je hráč na tahu, tak ho nastavit jako aktuálního hráče
             if player.on_turn:
                 self.current_player = player
                 break
@@ -76,15 +75,29 @@ class Game:
         ...
 
     def find_available_moves(self):
-        for tile in board.board:
-            if len(tile.stones) == 0:
-                pass
-
+        if game.current_player == player1:
+            player1_free_positions = [player1.from_pos+dice.values[0], player1.from_pos+dice.values[1], player1.from_pos+(dice.values[0]+dice.values[1])]
+            for pos in player1_free_positions:
+                if pos in range(23) and tile.check_free_tiles([board.board[player1_free_positions[0]], board.board[player1_free_positions[1]], board.board[player1_free_positions[2]]]):
+                    print(f"Volné pozice: {player1_free_positions}")
+                    return True
+                else:
+                    print("Mimo herní desku...")
+                    return False
+                
+        elif game.current_player == player2:
+            player2_free_positions = [player2.from_pos-dice.values[0], player2.from_pos-dice.values[1], player2.from_pos-(dice.values[0]+dice.values[1])]
+            for pos in player2_free_positions:
+                if pos in range(23) and tile.check_free_tiles([board.board[player2_free_positions[0]], board.board[player2_free_positions[1]], board.board[player2_free_positions[2]]]):
+                    print(f" Volné pozice: {player2_free_positions}")
+                    return True
+                else:
+                    print("Mimo herní desku...")
+                    return False
 
 class Board:
     def __init__(self):
         self.board = [Tile() for _ in range(24)]
-        free_positions = []
 
     def set_initial_board_layout(self):
         ...
@@ -93,7 +106,7 @@ class Board:
         for i in range(12, 0, -1):
             print(f"{i:2}", end=" ")
         print()
-        print("+" + "--+" * 11)
+        print("+" + "--+" * 11)                         
 
         for row in range(10):
             for i in range(11, -1, -1):
@@ -131,9 +144,6 @@ class Board:
 class Dice:
     def __init__(self):
         self.values = []
-        self.first_dice_position = board.board[dice.values[0]-1]
-        self.second_dice_position = board.board[dice.values[1]-1]
-        self.first_second_dice_position = board.board[(dice.values[0] + dice.values[1])-1]
 
     def throw(self):
         self.values = [random.randint(1, 6), random.randint(1, 6)]
@@ -169,6 +179,15 @@ class Tile:
     def count_stones_in_tile(self, tile):
         ...
 
+    def check_free_tiles(self, tiles):
+        for tile in tiles:
+            if len(tile.stones) > 1 and tile.stones[0].owner == game.current_player:
+                return True
+            elif not tile.stones:
+                return True
+            elif len(tile.stones) > 1 and tile.stones[0].owner != game.current_player:
+                return False
+
 
 # Inicializace hry
 bar = Bar()
@@ -179,11 +198,17 @@ board = Board()
 dice = Dice()
 stone1 = Stone(player1)
 stone2 = Stone(player2)
+tile = Tile()
 
 
 #testing...
 board.board[23].add_stone(stone2)
 board.board[12].add_stone(stone1)
+board.board[13].add_stone(stone1)
+board.board[14].add_stone(stone1)
+board.board[14].add_stone(stone1)
+board.board[14].add_stone(stone1)
+board.board[14].add_stone(stone1)
 game.get_initial_player()
 
 while game.check_valid_move():        
@@ -191,16 +216,22 @@ while game.check_valid_move():
     board.print_board()
     print(dice.throw())
     game.get_current_stone()
-    game.current_player.get_player_moves()
+    game.current_player.get_player_from()
     #pokud stone který chceme položit není current_player a nebo to není pouze jeden kámen, opačného hráče, tak tah nepovolit!
-    if game.current_stone != board.board[game.current_player.from_pos].stones[0]:
-        print("Nemůžete operovat s kameny druhého hráče!")
-        continue
-    
-    #pokud je kámen jiného hráče a zároveň se délka dlaždice, na kterou chceme umístit kámen 1, tak pak provedeme výhoz
-    if game.current_stone != board.board[game.current_player.to_pos] and len(board.board[game.current_player.to_pos].stones) == 1: 
-        bar.add_stone_to_bar(game.current_player.to_pos)
-        continue
+    for tile in board.board:
+        if len(tile.stones) > 1 and tile.stones[0].owner != game.current_player:
+            print("Nemůžete operovat s kameny druhého hráče!")
+            continue
+        
+    game.find_available_moves()
+    game.current_player.get_player_to()
+
     board.board[game.current_player.from_pos].remove_stone()
     board.board[game.current_player.to_pos].add_stone(game.current_stone)
+
+    #pokud je kámen jiného hráče a zároveň se délka dlaždice, na kterou chceme umístit kámen 1, tak pak provedeme výhoz
+    '''if game.current_stone != board.board[game.current_player.to_pos] and len(board.board[game.current_player.to_pos].stones) == 1: 
+        bar.add_stone_to_bar(game.current_player.to_pos)
+        continue'''
+
     game.switch_player()
