@@ -102,11 +102,11 @@ class Game:
 
         self.player2_home_tile_stone_count = 0
         for col in board.board[6:]:
-            for stone in col:
+            for stone in col.stones:
                 if stone.owner == player2:
                     self.player2_home_tile_stone_count += 1
         if self.player2_home_tile_stone_count == 15:
-            True
+            return True
         
     def check_wins(self):
         ...
@@ -145,11 +145,10 @@ class Game:
                     #hledání možných pozic pro hráče 1
                     if (len(board.board[pos].stones) >= 1 and board.board[pos].stones[0].owner == game.current_player) or (not board.board[pos].stones) or (len(board.board[pos].stones) == 1 and board.board[pos].stones[0].owner != game.current_player):
                         self.positions.append(pos)
-                elif pos in range(25) and game.count_home_tile_stones():
-                    if game.current_player == player1:
-                        self.positions.clear()
-                        self.positions.append(pos)
-                        print(self.positions)
+                elif pos not in range(24):
+                    print("Mimo herní desku")
+                    return False
+
         elif game.current_player == player2:
             self.positions.clear()
             player2_free_positions = [player2.from_pos-dice.values[0], player2.from_pos-dice.values[1], player2.from_pos-(dice.values[0]+dice.values[1])]
@@ -157,11 +156,9 @@ class Game:
                 if pos in range(24):
                      if (len(board.board[pos].stones) >= 1 and board.board[pos].stones[0].owner == game.current_player) or (not board.board[pos].stones) or (len(board.board[pos].stones) == 1 and board.board[pos].stones[0].owner != game.current_player):
                         self.positions.append(pos)
-                elif pos not in range(25) and game.count_home_tile_stones():
-                    if game.current_player == player1:
-                        self.positions.clear()
-                        self.positions.append(pos)
-                        print(self.positions)
+                elif pos not in range(24):
+                    print("Mimo herní desku")
+                    return False
                 
     def check_if_players_stone(self):
         #nepovoli hraci hrat za kamen, ktery neni jeho
@@ -178,15 +175,16 @@ class Game:
 
     def check_if_player_able_to_play(self):
         for stone in bar.bar_stones:
-            if stone.owner == player1 and bar.stones.count(stone1) > 0:
+            if stone.owner == player1 and bar.bar_stones.count(stone1) > 0:
                 # !!
-                if ((dice.values[0]+dice.values[1] or dice.values[0] or dice.values[1] not in board.board[6:]) and not (len(board.board[0 + (dice.values[0]+dice.values[1] or dice.values[0] or dice.values[1] in board.board[6:]) and (board.board[6:].stones[0].owner != player1)]))) and (len(board.board[6:].stones) > 0):
+                if dice.values[0]+dice.values[1] or dice.values[0] or dice.values[1] not in board.board[6:] and not len(board.board[0 + (dice.values[0]+dice.values[1] or dice.values[0] or dice.values[1] in board.board[6:] and board.board[6:].stones[0].owner != player1)]) and len(board.board[6:].stones) > 0:
                     print(f"Nemůžete hrát, Váš kámen {player1.stone_symbol} je na Baru")
-                    game.switch_player()
                 else:
                     print("Zpátky ve hře")
                     board.board[1].add_stone(stone1)
                 return False
+        return True
+
 #herní deska
 class Board:
     def __init__(self):
@@ -220,7 +218,7 @@ class Board:
         board.board[6].add_stone(stone2)
         board.board[6].add_stone(stone2)
         board.board[6].add_stone(stone2)
-        board.board[10].add_stone(stone2)
+        board.board[10].add_stone(stone1)
         board.board[10].add_stone(stone1)
         board.board[10].add_stone(stone1)
         board.board[3].add_stone(stone2)
@@ -327,33 +325,32 @@ tile = Tile()
 board.set_initial_board_layout()
 
 #testing
-game.current_player = player1
-player1.on_turn = True
+game.get_initial_player()
+print(len(board.board[15].stones))
+
 while True:
     print(game.current_player.name)
     board.print_board()
     print(dice.throw())
     game.get_current_stone()
-    if game.check_if_player_able_to_play() == False:
-        continue
     game.current_player.get_player_from()
     game.check_if_players_stone()
     game.find_available_moves()
     game.current_player.get_player_to()
     game.check_valid_move()
     if game.out_of_game() == False:
-            board.board[game.current_player.from_pos].remove_stone()
-            board.board[game.current_player.to_pos].add_stone(game.current_stone)
+        board.board[game.current_player.from_pos].remove_stone()
+        board.board[game.current_player.to_pos].add_stone(game.current_stone)
     if game.handle_player_moves():
         game.current_player.get_player_from()
         game.current_player.get_player_to()
-        game.check_valid_move()
         game.find_available_moves()
+        game.check_valid_move()
         game.handle_player_moves()
         if game.out_of_game() == False:
             board.board[game.current_player.from_pos].remove_stone()
             board.board[game.current_player.to_pos].add_stone(game.current_stone)
     else:
         board.board[game.current_player.from_pos].remove_stone()
-        board.board[game.current_player.to_pos].add_stone(game.current_stone)   
+        board.board[game.current_player.to_pos].add_stone(game.current_stone)  
     game.switch_player()
