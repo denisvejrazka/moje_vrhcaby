@@ -1,14 +1,16 @@
 import random
+import json
 # TO DO:
 # JSON
-
 class Bar:
     def __init__(self):
         self.bar_stones = []
         self.free_back_in_game_positions = []
+        self.total_stones_out = 0
 
     def add_stone_to_bar(self, position):
         self.bar_stones.append(board.board[position].stones[0])
+        self.total_stones_out += 1
         board.board[position].remove_stone()
         print(f"Hráč na pozici {position} byl vyhozen!")
 
@@ -132,10 +134,12 @@ class Game:
         
     def check_wins(self):
         if len(player1.home) == 15:
-            print(f"{player1.name} vyhrává!")
+            print(f"{player1.name} vyhrává a má všechny své kameny v domečku!")
+            print(f"Celkový počet vyhozených kamennů: {bar.total_stones_out}")
             return True
         elif len(player2.home) == 15:
-            print(f"{player2.name} vyhrává!")
+            print(f"{player2.name} vyhrává a má všechny své kameny v domečku!")
+            print(f"Celkový počet vyhozených kamennů: {bar.total_stones_out}")
             return True
         return False
 
@@ -170,7 +174,7 @@ class Game:
         else:
             print("Hráče nebylo možné dostat zpět do hry")
         game.switch_player()
-  
+        
 #herní deska
 class Board:
     def __init__(self):
@@ -294,6 +298,63 @@ class Tile:
     def print_stones(self):
         print(self.stones)
 
+#JSON
+def save_game_state(filename):
+    game_state = {
+        "player1": {
+            "name": player1.name,
+            "stone_symbol": player1.stone_symbol,
+
+        },
+        "player2": {
+            "name": player2.name,
+            "stone_symbol": player2.stone_symbol,
+
+        },
+        "bar": {
+            "bar_stones": [stone.symbol for stone in bar.bar_stones],
+            "free_back_in_game_positions": bar.free_back_in_game_positions,
+        },
+        "game": {
+            "is_game_over": game.is_game_over,
+
+        },
+        "board": {
+            "stones_on_tiles": [[stone.symbol for stone in tile.stones] for tile in board.board],
+        },
+        "dice": {
+            "values": dice.values,
+        }
+    }
+
+    with open(filename, "w") as file:
+        json.dump(game_state, file)
+
+
+def load_game_state(filename):
+    with open(filename, "r") as file:
+        game_state = json.load(file)
+
+    player1.name = game_state["player1"]["name"]
+    player1.stone_symbol = game_state["player1"]["stone_symbol"]
+
+    player2.name = game_state["player2"]["name"]
+    player2.stone_symbol = game_state["player2"]["stone_symbol"]
+
+    bar.bar_stones = [Stone(player1) if symbol == player1.stone_symbol else Stone(player2) for symbol in game_state["bar"]["bar_stones"]]
+    bar.free_back_in_game_positions = game_state["bar"]["free_back_in_game_positions"]
+
+    game.is_game_over = game_state["game"]["is_game_over"]
+
+    for tile, stones_on_tile in zip(board.board, game_state["board"]["stones_on_tiles"]):
+        tile.stones = [Stone(player1) if symbol == player1.stone_symbol else Stone(player2) for symbol in stones_on_tile]
+
+    dice.values = game_state["dice"]["values"]
+
+def save():
+    save_game_state("game_state.json")
+    print("Uloženo!")
+
 
 # Inicializace hry / vytváření instancí
 bar = Bar()
@@ -312,6 +373,7 @@ game.greet()
 board.set_initial_board_layout()
 player1.home_tile = board.board[19:]
 player2.home_tile = board.board[:6]
+
 #testing
 game.get_initial_player()
 while not game.check_wins():
@@ -319,9 +381,11 @@ while not game.check_wins():
     board.print_board()
     print(dice.throw())
     game.get_current_stone()
+
     if not bar.check_if_player_able_to_play(game.current_player, game.current_stone):
         game.get_player_back_to_board()
         continue
+
     game.current_player.get_player_from()
     game.check_if_players_stone()
     player1.free_positions = [player1.from_pos+dice.values[0], player1.from_pos+dice.values[1], player1.from_pos+(dice.values[0]+dice.values[1])]
@@ -330,11 +394,13 @@ while not game.check_wins():
     print(game.positions)
     game.current_player.get_player_to()
     game.detect_home_move()
+
     if game.current_player.to_pos == game.current_player.free_positions[2]:
         board.board[game.current_player.from_pos].remove_stone()
         board.board[game.current_player.to_pos].add_stone(game.current_stone)
         game.switch_player()
         continue
+
     if not bar.out_of_game():
         board.board[game.current_player.from_pos].remove_stone()
         board.board[game.current_player.to_pos].add_stone(game.current_stone)
@@ -342,15 +408,18 @@ while not game.check_wins():
     if not bar.check_if_player_able_to_play(game.current_player, game.current_stone):
         game.get_player_back_to_board()
         continue
+
     game.current_player.get_player_from()
     player1.free_positions = [player1.from_pos+dice.values[0], player1.from_pos+dice.values[1], player1.from_pos+(dice.values[0]+dice.values[1])]
     player2.free_positions = [player2.from_pos-dice.values[0], player2.from_pos-dice.values[1], player2.from_pos-(dice.values[0]+dice.values[1])]
-    game.find_available_moves(game.current_player.free_positions)
+    game.find_available_moves(game.current_player.free_positions)  
     print(game.positions)
     game.current_player.get_player_to()
     game.detect_home_move()
+
     if not bar.out_of_game():
         board.board[game.current_player.from_pos].remove_stone()
         board.board[game.current_player.to_pos].add_stone(game.current_stone)
 
     game.switch_player()
+
